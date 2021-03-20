@@ -90,10 +90,13 @@ class Blockchain:
 
     # generate book key
     def generate_book_keys(self, book_value):
-        f = '2'
-        encrypted = book_value + 'encrypted'
-        self.book.append({'encrypted_book': encrypted})
-        self.book_key.append({'key': f})
+        key = Fernet.generate_key()
+        ubyte_key = key.decode()
+        byte_key = Fernet(key)
+        encrypted = byte_key.encrypt(book_value.encode())
+        ubyte_encrypted = encrypted.decode()
+        self.book.append({'encrypted_book': ubyte_encrypted})
+        self.book_key.append({'key': ubyte_key})
 
     # set request
     def set_requests(self, sender_port, receiver_port, book_value):
