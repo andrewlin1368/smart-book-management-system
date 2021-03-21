@@ -32,11 +32,13 @@ class Blockchain:
             raise ValueError('Invalid')
 
     # create transaction
-    def new_transaction(self):
+    def new_transaction(self, req_id, key):
         self.transaction.append({
-            'proof': hashlib.sha256(self.request_id[0]['id'] + self.book_key[0]['key']).hexdigest()
+            'proof': req_id+key
         })
-        return self.last_block['index'] + 1
+        last_block = self.last_block
+        previous_hash = self.hash(last_block)
+        self.new_block(previous_hash)
 
     # creating a new block and clears out all previous requests data
     def new_block(self, previous_hash):
@@ -119,8 +121,28 @@ class Blockchain:
                             requests.post(f'http://{sender_port}/set/key', json={
                                 'key': response.json()['key']
                             })
-                            # after key is sent sender node checks if key is valid
-
+                            # after key is sent sender node checks if key is valid by decrypting book
+                            # decrypted book should be book_value requested
+                            response = requests.get(f'http://{sender_port}/get/key')
+                            key = response.json()['key'].encode()
+                            response2 = requests.get(f'http://{sender_port}/get/book')
+                            encrypted_book = response2.json()['encrypted_book'].encode()
+                            f = Fernet(key)
+                            book = f.decrypt(encrypted_book).decode()
+                            if book == book_value:
+                                check = self.proof(sender_port, receiver_port, value=2)
+                                # after checking the keys with other nodes, if true, add transaction
+                                if check:
+                                    network = self.nodes
+                                    response = requests.get(f'http://{receiver_port}/get/id')
+                                    receiver_id = response.json()['id']
+                                    response = requests.get(f'http://{sender_port}/get/key')
+                                    sender_key = response.json()['key']
+                                    for ports in network:
+                                        requests.post(f'http://{ports}/new/transaction', json={
+                                            'id': receiver_id,
+                                            'key': sender_key
+                                        })
 
     # proof to check the matching keys and ids
     def proof(self, sender_port, receiver_port, value):
@@ -135,6 +157,22 @@ class Blockchain:
                     response = requests.get(f'http://{node}/get/id')
                     compare_this = response.json()['id']
                     # compare the id from receiver_port with other nodes in network
+                    if check_this == compare_this:
+                        confirm += 1
+            check = self.consensus(sender_port, receiver_port, confirm)
+            if check:
+                return True
+        # if value = 2 check keys, if true key is valid
+        if value == 2:
+            confirm = 0
+            response = requests.get(f'http://{sender_port}/get/key')
+            check_this = response.json()['key']
+            network = self.nodes
+            for node in network:
+                if node != sender_port and node != receiver_port:
+                    response = requests.get(f'http://{node}/get/key')
+                    compare_this = response.json()['key']
+                    # compare the key from sender_port with other nodes in network
                     if check_this == compare_this:
                         confirm += 1
             check = self.consensus(sender_port, receiver_port, confirm)
@@ -217,6 +255,19 @@ def new_nodes():
         'nodes': list(blockchain.nodes)
     }
     return jsonify(response), 201
+
+
+# create the transaction
+@app.route('/new/transaction', methods=['POST'])
+def new_transaction():
+    values = request.get_json()
+    required = ['id', 'key']
+    if not all(keys in values for keys in required):
+        return 'Missing data', 400
+
+    blockchain.new_transaction(values['id'], values['key'])
+    response = {'message': "New transaction made"}
+    return jsonify(response)
 
 
 # generate request id and a request to be sent
