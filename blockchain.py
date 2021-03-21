@@ -111,6 +111,48 @@ class Blockchain:
                     requests.post(f'http://{node}/request/id', json={
                         'id': response.json()['id']
                     })
+                    check = self.proof(sender_port, receiver_port, value=1)
+                    # if proof and consensus is true send key to sender port
+                    if check:
+                        response = requests.get(f'http://{receiver_port}/get/key')
+                        if response.status_code == 200:
+                            requests.post(f'http://{sender_port}/set/key', json={
+                                'key': response.json()['key']
+                            })
+                            # after key is sent sender node checks if key is valid
+
+
+    # proof to check the matching keys and ids
+    def proof(self, sender_port, receiver_port, value):
+        # if value = 1 check id, if true id is valid
+        if value == 1:
+            confirm = 0
+            response = requests.get(f'http://{receiver_port}/get/id')
+            check_this = response.json()['id']
+            network = self.nodes
+            for node in network:
+                if node != sender_port and node != receiver_port:
+                    response = requests.get(f'http://{node}/get/id')
+                    compare_this = response.json()['id']
+                    # compare the id from receiver_port with other nodes in network
+                    if check_this == compare_this:
+                        confirm += 1
+            check = self.consensus(sender_port, receiver_port, confirm)
+            if check:
+                return True
+
+    # check if >50% agrees
+    def consensus(self, sender_port, receiver_port, confirm):
+        # count all nodes in network but sender and receiver
+        # compare if agree is > 50%
+        counter = 0
+        network = self.nodes
+        for node in network:
+            if node != sender_port and node != receiver_port:
+                counter += 1
+        if confirm / counter > 0.5:
+            return True
+        return False
 
     # generate book key
     def generate_book_keys(self, book_value):
