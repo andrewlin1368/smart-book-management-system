@@ -38,7 +38,7 @@ class Blockchain:
         })
         return self.last_block['index'] + 1
 
-    # creating a new block
+    # creating a new block and clears out all previous requests data
     def new_block(self, previous_hash):
         block = {
             'index': len(self.chain) + 1,
@@ -46,11 +46,19 @@ class Blockchain:
             'previous_hash': previous_hash or self.hash(self.chain[-1])
         }
         self.transaction = []
+        self.request = []
+        self.book = []
+        self.request_id = []
+        self.book_key = []
         self.chain.append(block)
         return block
 
     # generating a request
     def new_requests(self, sender_port, receiver_port, book_value):
+
+        # loops through the network of nodes
+        # if node is the receiver port send request to it
+        # if node is not receiver port send request id to it
         network = self.nodes
         for node in network:
             if node == receiver_port:
@@ -59,13 +67,15 @@ class Blockchain:
                     'receiver_port': receiver_port,
                     'book_value': book_value
                 })
-            else:
+            elif node != receiver_port and node != sender_port:
                 response = requests.get(f'http://{sender_port}/get/id')
                 if response.status_code == 200:
                     requests.post(f'http://{node}/request/id', json={
                         'id': response.json()['id']
                     })
 
+        # loops through network of nodes after request if and request has been sent
+        # generate an encrypted book and a key from receiver port
         network = self.nodes
         for node in network:
             if node == receiver_port:
@@ -73,6 +83,9 @@ class Blockchain:
                     'book_value': book_value
                 })
 
+        # after generating book and key loop through network
+        # if node is the sender port send it the encrypted book
+        # all other nodes get the key
         network = self.nodes
         for node in network:
             if node == sender_port:
@@ -81,15 +94,28 @@ class Blockchain:
                     requests.post(f'http://{node}/set/book', json={
                         'encrypted_book': response.json()['encrypted_book']
                     })
-            else:
+            elif node != sender_port and node != receiver_port:
                 response = requests.get(f'http://{receiver_port}/get/key')
                 if response.status_code == 200:
                     requests.post(f'http://{node}/set/key', json={
                         'key': response.json()['key']
                     })
 
+        # after sender node gets encrypted book and other nodes get keys
+        # sender node sends receiver node the request id
+        network = self.nodes
+        for node in network:
+            if node == receiver_port:
+                response = requests.get(f'http://{sender_port}/get/id')
+                if response.status_code == 200:
+                    requests.post(f'http://{node}/request/id', json={
+                        'id': response.json()['id']
+                    })
+
     # generate book key
     def generate_book_keys(self, book_value):
+        # using Fernet to generate keys and encrypt the book
+        # decode to send non bytes through network
         key = Fernet.generate_key()
         ubyte_key = key.decode()
         byte_key = Fernet(key)
@@ -98,7 +124,7 @@ class Blockchain:
         self.book.append({'encrypted_book': ubyte_encrypted})
         self.book_key.append({'key': ubyte_key})
 
-    # set request
+    # adds request into the list
     def set_requests(self, sender_port, receiver_port, book_value):
         self.request.append({
             'sender_port': sender_port,
@@ -106,15 +132,15 @@ class Blockchain:
             'book_value': book_value
         })
 
-    # set encrypted book
+    # adds encrypted book into list
     def set_books(self, encrypted_book):
         self.book.append({'encrypted_book': encrypted_book})
 
-    # set encrypted key
+    # adds key into list
     def set_keys(self, book_key):
         self.book_key.append({'key': book_key})
 
-    # set request id
+    # adds request id into list
     def set_request_ids(self, request_id):
         self.request_id.append({'id': request_id})
 
@@ -151,7 +177,7 @@ def new_nodes():
     return jsonify(response), 201
 
 
-# generate request
+# generate request id and a request to be sent
 @app.route('/new/request', methods=['POST'])
 def new_request():
     values = request.get_json()
@@ -195,7 +221,7 @@ def set_book():
     return jsonify(response), 200
 
 
-# set request id
+# set request id by calling set_request_ids
 @app.route('/request/id', methods=['POST'])
 def set_request_id():
     values = request.get_json()
@@ -208,7 +234,7 @@ def set_request_id():
     return jsonify(response), 201
 
 
-# set book key
+# set book key by calling set_keys method
 @app.route('/set/key', methods=['POST'])
 def set_key():
     values = request.get_json()
@@ -221,7 +247,7 @@ def set_key():
     return jsonify(response), 201
 
 
-# generate book
+# generate book by calling generate_book_key method
 @app.route('/generate/book', methods=['POST'])
 def generate_book():
     values = request.get_json()
@@ -234,7 +260,7 @@ def generate_book():
     return jsonify(response), 201
 
 
-# get book
+# get the encrypted book from book list
 @app.route('/get/book', methods=['GET'])
 def get_book():
     response = {
@@ -243,7 +269,7 @@ def get_book():
     return jsonify(response), 200
 
 
-# get key
+# get key from key list
 @app.route('/get/key', methods=['GET'])
 def get_key():
     response = {
@@ -253,7 +279,7 @@ def get_key():
     return jsonify(response), 200
 
 
-# get id
+# get id from request_id list
 @app.route('/get/id', methods=['GET'])
 def get_id():
     response = {
@@ -263,7 +289,7 @@ def get_id():
     return jsonify(response), 200
 
 
-# get request
+# get request from request list
 @app.route('/get/request', methods=['GET'])
 def get_request():
     response = {
