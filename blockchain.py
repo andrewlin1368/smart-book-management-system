@@ -20,6 +20,10 @@ class Blockchain:
         self.nodes = set()  # nodes in network
 
         self.new_block(previous_hash='0')
+        self.create_nodes(address='http://127.0.0.1:5000')
+        self.create_nodes(address='http://127.0.0.1:5001')
+        self.create_nodes(address='http://127.0.0.1:5002')
+        self.create_nodes(address='http://127.0.0.1:5003')
 
     # new nodes
     def create_nodes(self, address):
