@@ -267,7 +267,7 @@ def new_transaction():
     values = request.get_json()
     required = ['id', 'key']
     if not all(keys in values for keys in required):
-        return 'Missing data', 400
+        return 'Transaction invalid', 400
 
     blockchain.new_transaction(values['id'], values['key'])
     response = {'message': "New transaction made"}
@@ -286,7 +286,7 @@ def new_request():
     blockchain.new_requests(values['sender_port'],
                             values['receiver_port'],
                             values['book_value']),
-    response = {'message': f"New request for {values['receiver_port']}"}
+    response = {'message': f"New request for {values['receiver_port']} completed and transaction added to chain"}
     return jsonify(response), 201
 
 
