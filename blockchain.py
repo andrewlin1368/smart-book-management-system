@@ -1,11 +1,10 @@
-import binascii
-import uuid
-from cryptography.fernet import Fernet
 import hashlib
 import json
 from urllib.parse import urlparse
 from uuid import uuid4
+
 import requests
+from cryptography.fernet import Fernet
 from flask import Flask, jsonify, request
 
 
@@ -38,7 +37,7 @@ class Blockchain:
     # create transaction
     def new_transaction(self, req_id, key):
         self.transaction.append({
-            'proof': req_id+key
+            'proof': req_id + key
         })
         last_block = self.last_block
         previous_hash = self.hash(last_block)
@@ -147,6 +146,16 @@ class Blockchain:
                                             'id': receiver_id,
                                             'key': sender_key
                                         })
+                                # if failed remove stored values
+                                else:
+                                    network = self.nodes
+                                    for nodes in network:
+                                        requests.get(f'http://{nodes}/reset')
+                    # if failed remove stored values
+                    else:
+                        network = self.nodes
+                        for nodes in network:
+                            requests.get(f'http://{nodes}/reset')
 
     # proof to check the matching keys and ids
     def proof(self, sender_port, receiver_port, value):
@@ -182,6 +191,7 @@ class Blockchain:
             check = self.consensus(sender_port, receiver_port, confirm)
             if check:
                 return True
+        return False
 
     # check if >50% agrees
     def consensus(self, sender_port, receiver_port, confirm):
@@ -227,6 +237,14 @@ class Blockchain:
     # adds request id into list
     def set_request_ids(self, request_id):
         self.request_id.append({'id': request_id})
+
+    # reset
+    def reset(self):
+        self.transaction = []
+        self.request = []
+        self.book = []
+        self.request_id = []
+        self.book_key = []
 
     # hashing
     @staticmethod
@@ -286,7 +304,7 @@ def new_request():
     blockchain.new_requests(values['sender_port'],
                             values['receiver_port'],
                             values['book_value']),
-    response = {'message': f"New request for {values['receiver_port']} completed and transaction added to chain"}
+    response = {'message': 'Run /get/chain to verify, request added = valid, request not added = invalid and try again'}
     return jsonify(response), 201
 
 
@@ -405,6 +423,16 @@ def get_chain():
         'length': len(blockchain.chain)
     }
     return jsonify(response), 200
+
+
+# reset values
+@app.route('/reset', methods=['GET'])
+def reset():
+    blockchain.reset()
+    response = {
+        'message': 'Values reset'
+    }
+    return jsonify(response)
 
 
 if __name__ == '__main__':
