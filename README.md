@@ -41,3 +41,6 @@ $ pipenv install
 - a static network with 4 ports 
 - Nodes can be added but every other nodes must also add it manually
 - We assume that every node holds the book being requested. 
+- Requests must follow a specific format, sender_port, receiver_port, and book_value
+
+![image](https://ibb.co/QHFdYf4)
