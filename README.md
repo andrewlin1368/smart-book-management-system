@@ -38,9 +38,10 @@ $ pipenv install
 
 ## Others
 
-- a static network with 4 ports 
+- A static network with 4 ports 
 - Nodes can be added but every other nodes must also add it manually
 - We assume that every node holds the book being requested. 
+- The miner is the port requesting the book to prevent any bad actors 
 - Requests must follow a specific format, sender_port, receiver_port, and book_value
 
 ![Capture](https://user-images.githubusercontent.com/77586278/112199065-284ef680-8be4-11eb-9831-5477cb48d433.PNG)
