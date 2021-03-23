@@ -1,6 +1,6 @@
 # Smart Book Management System
 
-(https://base.imgix.net/files/base/ebm/mhlnews/image/2019/04/mhlnews_10632_blockchain_2.png?auto=format&fit=crop&h=432&w=768)
+![image](https://base.imgix.net/files/base/ebm/mhlnews/image/2019/04/mhlnews_10632_blockchain_2.png?auto=format&fit=crop&h=432&w=768)
 
 ## To run
 1. Python 3.6+
