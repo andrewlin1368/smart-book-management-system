@@ -263,22 +263,6 @@ node_identifier = str(uuid4()).replace('-', '')
 blockchain = Blockchain()
 
 
-# add new node
-@app.route('/new/nodes', methods=['POST'])
-def new_nodes():
-    values = request.get_json()
-    nodes = values.get('nodes')
-    if nodes is None:
-        return "Error", 400
-    for node in nodes:
-        blockchain.create_nodes(node)
-    response = {
-        'message': "Node created",
-        'nodes': list(blockchain.nodes)
-    }
-    return jsonify(response), 201
-
-
 # create the transaction
 @app.route('/new/transaction', methods=['POST'])
 def new_transaction():
@@ -389,7 +373,6 @@ def get_book():
 def get_key():
     response = {
         'key': blockchain.book_key[0]['key']
-        # 'check_key': blockchain.book_key[1]['key']
     }
     return jsonify(response), 200
 
@@ -399,7 +382,6 @@ def get_key():
 def get_id():
     response = {
         'id': blockchain.request_id[0]['id']
-        # 'check_id': blockchain.request_id[1]['id']
     }
     return jsonify(response), 200
 
