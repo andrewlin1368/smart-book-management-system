@@ -39,7 +39,12 @@ $ pipenv install
 ## Others
 
 - A static network with 4 ports
-- We assume that every node holds the book being requested. 
+- After launching each ports, you must add books into each port manually with the /add/book method
+
+Sample:  
+``` { "book_value": "1" }```
+
+- Valid requests will transfer book ownership 
 - The miner is the port requesting the book to prevent any bad actors 
 - Requests must follow a specific format, sender_port, receiver_port, and book_value
 
