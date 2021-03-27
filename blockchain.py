@@ -17,7 +17,7 @@ class Blockchain:
         self.book = []  # encrypted book from node getting request
         self.book_key = []  # private key for encrypted book
         self.nodes = set()  # nodes in network
-
+        self.books = []
         self.new_block(previous_hash='0')
         self.create_nodes(address='http://127.0.0.1:5000')
         self.create_nodes(address='http://127.0.0.1:5001')
@@ -146,6 +146,12 @@ class Blockchain:
                                             'id': receiver_id,
                                             'key': sender_key
                                         })
+                                    requests.post(f'http://{sender_port}/add/book', json={
+                                        'book_value': book_value,
+                                    })
+                                    requests.post(f'http://{receiver_port}/remove/book', json={
+                                        'book_value': book_value,
+                                    })
                                 # if failed remove stored values
                                 else:
                                     network = self.nodes
@@ -215,8 +221,13 @@ class Blockchain:
         byte_key = Fernet(key)
         encrypted = byte_key.encrypt(book_value.encode())
         ubyte_encrypted = encrypted.decode()
-        self.book.append({'encrypted_book': ubyte_encrypted})
-        self.book_key.append({'key': ubyte_key})
+        for i in range(len(self.books)):
+            if self.books[i] == book_value:
+                self.book.append({'encrypted_book': ubyte_encrypted})
+                self.book_key.append({'key': ubyte_key})
+                return
+        self.book.append({'encrypted_book': 'error'})
+        self.book_key.append({'key': 'error'})
 
     # adds request into the list
     def set_requests(self, sender_port, receiver_port, book_value):
@@ -245,6 +256,14 @@ class Blockchain:
         self.book = []
         self.request_id = []
         self.book_key = []
+
+    # add book
+    def add_book(self, book_value):
+        self.books.append(book_value)
+
+    # remove book
+    def remove_book(self, book_value):
+        self.books.remove(book_value)
 
     # hashing
     @staticmethod
@@ -415,6 +434,39 @@ def reset():
         'message': 'Values reset'
     }
     return jsonify(response)
+
+
+# remove book
+@app.route('/remove/book', methods=['POST'])
+def remove_book():
+    values = request.get_json()
+    required = ['book_value']
+    if not all(keys in values for keys in required):
+        return 'Missing request info', 400
+    blockchain.remove_book(values['book_value'])
+    response = {'message': "Book removed"}
+    return jsonify(response), 201
+
+
+# append book
+@app.route('/add/book', methods=['POST'])
+def add_book():
+    values = request.get_json()
+    required = ['book_value']
+    if not all(keys in values for keys in required):
+        return 'Missing request info', 400
+    blockchain.add_book(values['book_value'])
+    response = {'message': "Book added"}
+    return jsonify(response), 201
+
+
+# check books
+@app.route('/get/books', methods=['GET'])
+def get_books():
+    response = {
+        'book': blockchain.books
+    }
+    return jsonify(response), 200
 
 
 if __name__ == '__main__':
