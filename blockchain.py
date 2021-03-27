@@ -226,8 +226,6 @@ class Blockchain:
                 self.book.append({'encrypted_book': ubyte_encrypted})
                 self.book_key.append({'key': ubyte_key})
                 return
-        self.book.append({'encrypted_book': 'error'})
-        self.book_key.append({'key': 'error'})
 
     # adds request into the list
     def set_requests(self, sender_port, receiver_port, book_value):
