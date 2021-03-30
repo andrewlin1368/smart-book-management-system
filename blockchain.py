@@ -58,8 +58,27 @@ class Blockchain:
         self.chain.append(block)
         return block
 
+    # validate chain
+    def validate(self):
+        previous_block = self.chain[0]
+        counter = 1
+        while counter < len(self.chain):
+            current_block = self.chain[counter]
+            previous_hash = self.hash(previous_block)
+            if current_block['previous_hash'] != previous_hash:
+                return False
+            previous_block = current_block
+            counter += 1
+        return True
+
     # generating a request
     def new_requests(self, sender_port, receiver_port, book_value):
+        # validate previous chain
+        network = self.nodes
+        for node in network:
+            response = requests.get(f'http://{node}/validate')
+            if response.status_code != 200:
+                return
 
         # loops through the network of nodes
         # if node is the receiver port send request to it
@@ -278,6 +297,15 @@ class Blockchain:
 app = Flask(__name__)
 node_identifier = str(uuid4()).replace('-', '')
 blockchain = Blockchain()
+
+
+# validation
+@app.route('/validate', methods=['GET'])
+def validate():
+    response = blockchain.validate()
+    if response:
+        return jsonify(), 200
+    return jsonify(), 201
 
 
 # create the transaction
