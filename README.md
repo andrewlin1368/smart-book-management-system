@@ -2,7 +2,7 @@
 
 ![image](https://base.imgix.net/files/base/ebm/mhlnews/image/2019/04/mhlnews_10632_blockchain_2.png?auto=format&fit=crop&h=432&w=768)
 
-## To run
+## Running
 1. Python 3.6+
 2. Install pipenv
 ```
