@@ -39,7 +39,8 @@ $ pipenv install
 ## Others
 
 - A static network with 4 ports
-- After launching each ports, you must add books into each port manually with the /add/book method
+- After launching each ports, you must add books into each port manually with the /add/book method.
+   ( This can be ignored, books values will be automatically generated between 0 and 9 inclusive ) 
 
 Sample:  
 ``` { "book_value": "1" }```
