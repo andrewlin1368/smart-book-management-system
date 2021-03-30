@@ -7,6 +7,8 @@ import requests
 from cryptography.fernet import Fernet
 from flask import Flask, jsonify, request
 
+from secrets import randbelow
+
 
 class Blockchain:
     def __init__(self):
@@ -23,6 +25,7 @@ class Blockchain:
         self.create_nodes(address='http://127.0.0.1:5001')
         self.create_nodes(address='http://127.0.0.1:5002')
         self.create_nodes(address='http://127.0.0.1:5003')
+        self.add_book(book_value=randbelow(10))  # add a random book into each port
 
     # new nodes
     def create_nodes(self, address):
@@ -58,7 +61,7 @@ class Blockchain:
         self.chain.append(block)
         return block
 
-    # validate chain
+    # validate chain by checking previous hashes
     def validate(self):
         previous_block = self.chain[0]
         counter = 1
