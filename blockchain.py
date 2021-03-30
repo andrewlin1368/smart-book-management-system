@@ -25,7 +25,7 @@ class Blockchain:
         self.create_nodes(address='http://127.0.0.1:5001')
         self.create_nodes(address='http://127.0.0.1:5002')
         self.create_nodes(address='http://127.0.0.1:5003')
-        self.add_book(book_value=randbelow(10))  # add a random book into each port
+        self.add_book(book_value=str(randbelow(10)))  # add a random book into each port
 
     # new nodes
     def create_nodes(self, address):
