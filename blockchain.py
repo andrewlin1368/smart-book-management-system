@@ -81,7 +81,7 @@ class Blockchain:
         for node in network:
             response = requests.get(f'http://{node}/validate')
             if response.status_code != 200:
-                return
+                return False
 
         # loops through the network of nodes
         # if node is the receiver port send request to it
@@ -100,6 +100,8 @@ class Blockchain:
                     requests.post(f'http://{node}/request/id', json={
                         'id': response.json()['id']
                     })
+                else:
+                    return False
 
         # loops through network of nodes after request if and request has been sent
         # generate an encrypted book and a key from receiver port
@@ -121,12 +123,16 @@ class Blockchain:
                     requests.post(f'http://{node}/set/book', json={
                         'encrypted_book': response.json()['encrypted_book']
                     })
+                else:
+                    return False
             elif node != sender_port and node != receiver_port:
                 response = requests.get(f'http://{receiver_port}/get/key')
                 if response.status_code == 200:
                     requests.post(f'http://{node}/set/key', json={
                         'key': response.json()['key']
                     })
+                else:
+                    return False
 
         # after sender node gets encrypted book and other nodes get keys
         # sender node sends receiver node the request id
@@ -174,16 +180,23 @@ class Blockchain:
                                     requests.post(f'http://{receiver_port}/remove/book', json={
                                         'book_value': book_value,
                                     })
+                                    return True
                                 # if failed remove stored values
                                 else:
                                     network = self.nodes
                                     for nodes in network:
                                         requests.get(f'http://{nodes}/reset')
+                                    return False
+                        else:
+                            return False
                     # if failed remove stored values
                     else:
                         network = self.nodes
                         for nodes in network:
                             requests.get(f'http://{nodes}/reset')
+                        return False
+                else:
+                    return False
 
     # proof to check the matching keys and ids
     def proof(self, sender_port, receiver_port, value):
@@ -333,11 +346,16 @@ def new_request():
         return 'Missing request info', 400
 
     blockchain.set_request_ids(uuid4())
-    blockchain.new_requests(values['sender_port'],
-                            values['receiver_port'],
-                            values['book_value']),
-    response = {'message': 'Run /get/chain to verify, request added = valid, request not added = invalid and try again'}
-    return jsonify(response), 201
+    check = blockchain.new_requests(values['sender_port'],
+                                    values['receiver_port'],
+                                    values['book_value']),
+
+    if bool(check[0]):
+        response = {'message': 'Request completed!'}
+        return jsonify(response), 201
+    else:
+        response = {'message': 'Request failed!'}
+        return jsonify(response), 400
 
 
 # set request
@@ -410,6 +428,8 @@ def generate_book():
 # get the encrypted book from book list
 @app.route('/get/book', methods=['GET'])
 def get_book():
+    if len(blockchain.book) == 0:
+        return 400
     response = {
         'encrypted_book': blockchain.book[0]['encrypted_book']
     }
@@ -419,6 +439,8 @@ def get_book():
 # get key from key list
 @app.route('/get/key', methods=['GET'])
 def get_key():
+    if len(blockchain.book_key) == 0:
+        return 400
     response = {
         'key': blockchain.book_key[0]['key']
     }
@@ -428,6 +450,8 @@ def get_key():
 # get id from request_id list
 @app.route('/get/id', methods=['GET'])
 def get_id():
+    if len(blockchain.request_id) == 0:
+        return 400
     response = {
         'id': blockchain.request_id[0]['id']
     }
@@ -437,6 +461,8 @@ def get_id():
 # get request from request list
 @app.route('/get/request', methods=['GET'])
 def get_request():
+    if len(blockchain.request) == 0:
+        return 400
     response = {
         'sender_port': blockchain.request[0]['sender_port'],
         'receiver_port': blockchain.request[0]['receiver_port'],
