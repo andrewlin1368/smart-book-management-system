@@ -351,10 +351,11 @@ def new_request():
                                     values['book_value']),
 
     if bool(check[0]):
-        response = {'message': 'Request completed!'}
+        response = {'message': "Request completed and transaction added to chain, "
+                               f"http://{values['sender_port']}/get/chain"}
         return jsonify(response), 201
     else:
-        response = {'message': 'Request failed!'}
+        response = {'message': 'Request was not completed.'}
         return jsonify(response), 400
 
 
