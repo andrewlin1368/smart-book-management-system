@@ -18,6 +18,8 @@ $ pipenv install
     * `$ python blockchain.py -p 5001`
     * `$ python blockchain.py -p 5002`
     * `$ python blockchain.py -p 5003`
+
+5. Use postman as the api
     
 ## Validation (Proof of works) and Consensus
 
