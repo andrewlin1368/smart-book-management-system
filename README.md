@@ -25,7 +25,7 @@ $ pipenv install
 
 - Imagine 4 ports 5000,5001,5002,and 5003
 - 5000 generates a request id and makes a request to 5001 requesting the book. 
-- 5000 sends request id to 5002 and 5003 but not to 5000
+- 5000 sends request id to 5002 and 5003 but not to 5001
 - 5000 sends request to 5001 but not 5002 and 5003
 - 5001 generates an encrypted key to encrypt the book 5000 requested
 - 5001 sends 5002 and 5003 the encrypted key and sends 5000 the encrypted book
